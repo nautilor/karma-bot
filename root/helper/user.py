@@ -3,6 +3,7 @@ from root.model.user_model import UserModel
 from mongoengine.errors import DoesNotExist
 from telegram import User
 
+
 def find_by_username(user: User, create: bool = True):
     try:
         # extract th user stored in the database if present

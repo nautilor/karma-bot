@@ -6,10 +6,10 @@ from telegram.message import Message
 from root.model.user_model import UserModel
 from telegram.user import User
 from root.model.message_model import MessageModel
-from root.constant.messages import DOWNVOTED_USER, UPVOTED_USER, YOU_SHALL_NOT_PASS
+from root.constant.messages import BOT_UPVOTE, DOWNVOTED_USER, SELF_UPVOTE, UPVOTED_USER, UPVOTE_FROM_BOT, YOU_SHALL_NOT_PASS
 from telegram import Update
 from telegram.ext.callbackcontext import CallbackContext
-from telegram_utils.utils.tutils import send_and_delete
+from telegram_utils.utils.tutils import send_and_delete, send_message
 
 
 """
@@ -25,10 +25,11 @@ from telegram_utils.utils.tutils import send_and_delete
     to the function `handle_karma`
 """
 
+
 def upvote_message(message: MessageModel, user: User):
     """
-        Add the user_id to the message.upvotes stored in the database
-        this is used to check if the user has already upvoted the message
+    Add the user_id to the message.upvotes stored in the database
+    this is used to check if the user has already upvoted the message
     """
     # if the user has already upvoted the message ignore
     if user.id in message.upvotes:
@@ -50,9 +51,10 @@ def handle_upvote(update: Update, context: CallbackContext):
     upvote_user = lambda karma: karma + 1
     handle_karma(update, context, upvote_user, upvote_message, UPVOTED_USER)
 
+
 def format_upvote_message(_: MessageModel, user: UserModel):
     """
-        Format the message about the upvote that needs to be sent back to the chat
+    Format the message about the upvote that needs to be sent back to the chat
     """
     # extract the username or the first_name from the user
     name: str = user.username if user.username else user.first_name
@@ -65,8 +67,8 @@ def format_upvote_message(_: MessageModel, user: UserModel):
 
 def downvote_message(message: MessageModel, user: User):
     """
-        Add the user_id to the message.downvotes stored in the database
-        this is used to check if the user has already downvoted the message
+    Add the user_id to the message.downvotes stored in the database
+    this is used to check if the user has already downvoted the message
     """
     # if the user has already downvoted the message ignore
     if user.id in message.downvotes:
@@ -82,9 +84,10 @@ def downvote_message(message: MessageModel, user: User):
     message.save()
     return True
 
+
 def format_downvote_message(_: MessageModel, user: UserModel):
     """
-        Format the message about the downvote that needs to be sent back to the chat
+    Format the message about the downvote that needs to be sent back to the chat
     """
     # extract the username or the first_name from the user
     name: str = user.username if user.username else user.first_name
@@ -96,13 +99,26 @@ def handle_downvote(update: Update, context: CallbackContext):
     """ Handle an upvote """
     # lambda function to downvote the user
     downvote_user = lambda karma: karma - 1
-    handle_karma(update, context, downvote_user, downvote_message, format_downvote_message)
+    handle_karma(
+        update, context, downvote_user, downvote_message, format_downvote_message
+    )
 
 
 ##################################################################
 
-def handle_karma( update: Update, _: CallbackContext, user_callback: callable, message_callback: callable, message_format: callable):
-    """ Perform the common operations shared between upvote and dowvote """
+
+def handle_karma(
+    update: Update,
+    _: CallbackContext,
+    user_callback: callable,
+    message_callback: callable,
+    message_format: callable,
+):
+    """
+    This function will:
+        - check if the matching regex has a reply message
+        - store the user that upvoted/downvoted and the one he quoted
+    """
     # extract the message or the edited_message
     message: Message = update.edited_message
     message: Message = message if message else update.message
@@ -111,15 +127,33 @@ def handle_karma( update: Update, _: CallbackContext, user_callback: callable, m
     if not reply:
         return YOU_SHALL_NOT_PASS
 
+    # store the information about the user who upvoted the message
+    upvote_user: User = message.from_user
+    database_user: UserModel = find_by_username(upvote_user)
+
     # exctract the message_id and the chat_id
     chat_id: int = reply.chat_id
     user: User = reply.from_user
+
+    # WTF?!
+    if upvote_user.is_bot:
+        return send_message(chat_id, UPVOTE_FROM_BOT)
+
+    # tell the user to f*** off if they try to upvote a bot
+    if user.is_bot:
+        name = upvote_user.first_name if upvote_user.first_name else upvote_user.username
+        return send_and_delete(BOT_UPVOTE % (upvote_user.id, name), timeout=10)
+
+    # tell the user to f*** off if they try to upvote themselves
+    if user.id == upvote_user.id:
+        name = upvote_user.first_name if upvote_user.first_name else upvote_user.username
+        return send_and_delete(SELF_UPVOTE % (upvote_user.id, name), timeout=10)
 
     # find or create a message on the database
     database_message: MessageModel = find_by_chat_and_message(reply)
 
     # call the relative function to upvote/downvote
-    message_callback(database_message, message.from_user)
+    message_callback(database_message, upvote_user)
 
     # find or create the user on the database
     database_user: UserModel = find_by_username(user)

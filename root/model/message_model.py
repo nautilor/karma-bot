@@ -3,6 +3,7 @@
 from mongoengine import IntField, ListField
 from telegram_utils.model.base_model import BaseModel
 
+
 class MessageModel(BaseModel):
     """ The representation of a message """
 
