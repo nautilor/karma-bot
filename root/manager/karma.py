@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 
+# region
 from root.helper.user import find_by_username
 from root.helper.message import find_by_chat_and_message
 from telegram.message import Message
 from root.model.user_model import UserModel
 from telegram.user import User
 from root.model.message_model import MessageModel
-from root.constant.messages import BOT_UPVOTE, DOWNVOTED_USER, SELF_UPVOTE, UPVOTED_USER, UPVOTE_FROM_BOT, YOU_SHALL_NOT_PASS
+from root.constant.messages import (
+    BOT_HAS_NO_KARMA,
+    BOT_UPVOTE,
+    DOWNVOTED_USER,
+    SELF_KARMA,
+    SELF_UPVOTE,
+    UPVOTED_USER,
+    UPVOTE_FROM_BOT,
+    USER_KARMA,
+    YOU_SHALL_NOT_PASS,
+)
 from telegram import Update
 from telegram.ext.callbackcontext import CallbackContext
 from telegram_utils.utils.tutils import send_and_delete, send_message
-
+# endregion
 
 """
     This file handles the upvote and the downvote.
@@ -69,6 +80,7 @@ def downvote_message(message: MessageModel, user: User):
     """
     Add the user_id to the message.downvotes stored in the database
     this is used to check if the user has already downvoted the message
+    ...
     """
     # if the user has already downvoted the message ignore
     if user.id in message.downvotes:
@@ -141,12 +153,16 @@ def handle_karma(
 
     # tell the user to f*** off if they try to upvote a bot
     if user.is_bot:
-        name = upvote_user.first_name if upvote_user.first_name else upvote_user.username
+        name = (
+            upvote_user.first_name if upvote_user.first_name else upvote_user.username
+        )
         return send_and_delete(BOT_UPVOTE % (upvote_user.id, name), timeout=10)
 
     # tell the user to f*** off if they try to upvote themselves
     if user.id == upvote_user.id:
-        name = upvote_user.first_name if upvote_user.first_name else upvote_user.username
+        name = (
+            upvote_user.first_name if upvote_user.first_name else upvote_user.username
+        )
         return send_and_delete(SELF_UPVOTE % (upvote_user.id, name), timeout=10)
 
     # find or create a message on the database
@@ -165,5 +181,33 @@ def handle_karma(
     # format the message to send
     text: str = message_format(database_message, database_user)
 
+    # send the message with auto-desctruction set to 10 seconds
+    send_and_delete(chat_id, text, timeout=10)
+
+##################################################################
+
+def user_karma(update: Update, _: CallbackContext):
+    """ Show the current user or a quoted one karma points """
+    # extract the message or the edited_message
+    message: Message = update.edited_message
+    message: Message = message if message else update.message
+    chat_id: int = message.chat_id
+    is_reply: bool = True if message.reply_to_message else False
+    # use the quoted user if the original user quoted someone
+    user: User = message.reply_to_message.from_user if is_reply else message.from_user
+    # if the user quoted a bot tell him
+    if user.is_bot:
+        user: User = message.from_user
+        name: str = user.first_name if user.first_name else user.username
+        return send_and_delete(BOT_HAS_NO_KARMA % (user.id, name))
+    # find or create the user on the database
+    database_user: UserModel = find_by_username(user)
+    # extract the user karma point
+    karma: int = database_user.karma_points
+    name: str = user.first_name if user.first_name else user.username
+    # create a different message if there's a quote
+    # fmt: off
+    text: str = USER_KARMA % (name, karma) if is_reply else SELF_KARMA % (user.id, name, karma)
+    # fmt: on
     # send the message with auto-desctruction set to 10 seconds
     send_and_delete(chat_id, text, timeout=10)

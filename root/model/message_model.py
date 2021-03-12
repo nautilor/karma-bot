@@ -6,7 +6,6 @@ from telegram_utils.model.base_model import BaseModel
 
 class MessageModel(BaseModel):
     """ The representation of a message """
-
     message_id = IntField(required=True)
     chat_id = IntField(required=True)
     upvotes = ListField(IntField())

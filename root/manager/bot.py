@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+# region
 from telegram.ext import Updater, Dispatcher
 from telegram.ext.messagehandler import MessageHandler
 from telegram.ext import CommandHandler
 from telegram.ext import Filters
 from telegram_utils.utils.misc import environment
 from root.manager.karma import handle_downvote, handle_upvote, user_karma
+# endregion
 
 # Match for a +1 or a 👍 only
 UPVOTE_REGEX: str = r"(^\+1$)|(^👍$)"
@@ -41,3 +43,5 @@ def add_handler(updater: Updater):
     # add the message handler and the command handler for the downvote
     dispatcher.add_handler(MessageHandler(downvote, handle_downvote))
     dispatcher.add_handler(CommandHandler("downvote", handle_downvote))
+
+    dispatcher.add_handler(CommandHandler("karma", user_karma))
