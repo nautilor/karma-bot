@@ -5,3 +5,6 @@ UPVOTE_REGEX: str = r"(^\+1$)|(^👍$)"
 
 # Match for a -1 or a 👎 only
 DOWNVOTE_REGEX: str = r"(^\+1$)|(^👍$)"
+
+LANG_EN = "en"
+LANG_IT = "it"

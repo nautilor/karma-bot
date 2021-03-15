@@ -3,6 +3,7 @@
 # region
 from root.model.configuration import Configuration
 from mongoengine.errors import DoesNotExist
+
 # endregion
 
 

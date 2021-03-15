@@ -9,4 +9,3 @@ class Configuration(BaseModel):
 
     code = StringField(required=True)
     value = StringField()
-    

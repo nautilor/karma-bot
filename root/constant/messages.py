@@ -19,7 +19,7 @@ CANNOT_MODIFY_SELF_KARMA = (
 )
 
 # message when a bot send an upvote/downvote a user/bot
-BOT_MODIFIED_KARMA = "Ora ti siedi e mi spieghi come un bot sia riuscito modificare il bot di una persona."
+BOT_MODIFIED_KARMA = "Ora ti siedi e mi spieghi come un bot sia riuscito modificare il karma di una persona."
 
 # message when a user try to upvote/downvote a bot
 CANNOT_MODIFY_BOT_KARMA = '<a href="tg://user?id=%s">%s</a>, purtroppo i bot non hanno karma e quindi questa operazione non può essere eseguita.'
@@ -37,3 +37,6 @@ SELF_KARMA = '<a href="tg://user?id=%s">%s</a>, hai accumulato %s punti.'
 
 # message to show uotes user karma points
 USER_KARMA = "<i>%s</i> ha accumulato %s punti."
+
+# message to show the top 10 messages
+TOP_MESSAGES = "Ecco la lista dei migliori messaggi per questo gruppo:\n\n"
