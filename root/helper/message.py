@@ -8,6 +8,12 @@ from telegram import Message, User
 # endregion
 
 
+def find_top_messages(chat_id: int):
+    try:
+        return MessageModel.objects.filter(chat_id=chat_id).sort(karma_points=-1).limit(10)
+    except DoesNotExist:
+        return []
+
 def find_by_chat_and_message(message: Message, create: bool = True):
     # exctract the message_id and the chat_id
     message_id: int = message.message_id

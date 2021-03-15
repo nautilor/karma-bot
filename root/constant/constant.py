@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+MESSAGE_LINK = "https://t.me/c/%s/%s"
+
+HREF = '<a href="%s">%s</a>'
+
 # Match for a +1 or a 👍 only
 UPVOTE_REGEX: str = r"(^\+1$)|(^👍$)"
 

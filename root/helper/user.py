@@ -8,6 +8,13 @@ from telegram import User
 # endregion
 
 
+def find_by_user_id(user_id: int):
+    try:
+        # extract th user stored in the database if present
+        return UserModel.objects.get(user_id=user_id)
+    except DoesNotExist:
+        return None
+
 def find_by_username(user: User, create: bool = True):
     try:
         # extract th user stored in the database if present
