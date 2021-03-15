@@ -3,7 +3,9 @@
 # region
 from telegram_utils.utils.database import db_connect
 from root.manager.bot import start_bot
+
 # endregion
+
 
 def main():
     db_connect()

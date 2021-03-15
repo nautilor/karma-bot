@@ -7,6 +7,7 @@ from telegram_utils.model.base_model import BaseModel
 
 class UserModel(BaseModel):
     """ The representation of a user """
+
     user_id = IntField(required=True)
     first_name = StringField(required=True)
     last_name = StringField(required=True)

@@ -10,7 +10,8 @@ from root.model.message_model import MessageModel
 from root.constant.messages import (
     BOT_HAS_NO_KARMA,
     CANNOT_MODIFY_BOT_KARMA,
-    DOWNVOTED_USER, OPERATION_ALREADY_PERFORMED,
+    DOWNVOTED_USER,
+    OPERATION_ALREADY_PERFORMED,
     SELF_KARMA,
     CANNOT_MODIFY_SELF_KARMA,
     UPVOTED_USER,
@@ -21,6 +22,7 @@ from root.constant.messages import (
 from telegram import Update
 from telegram.ext.callbackcontext import CallbackContext
 from telegram_utils.utils.tutils import send_and_delete, send_message
+
 # endregion
 
 """
@@ -44,11 +46,12 @@ def upvote_message(message: MessageModel, user: User):
     """
     # if the user has already upvoted the message ignore
     if user.id in message.upvotes:
-        name: str = user.username if user.username else user.first_name
-        send_and_delete(OPERATION_ALREADY_PERFORMED % (user.id, name))
+        name: str = user.first_name if user.first_name else user.username
+        send_and_delete(message.chat_id, OPERATION_ALREADY_PERFORMED % (user.id, name))
         return False
     # upvote the message
     message.upvotes.append(user.id)
+    message.karma_points += 1
     # if the user has previously downvoted the message
     if user.id in message.downvotes:
         # remove the user from the downvote list
@@ -70,7 +73,7 @@ def format_upvote_message(_: MessageModel, user: UserModel):
     Format the message about the upvote that needs to be sent back to the chat
     """
     # extract the username or the first_name from the user
-    name: str = user.username if user.username else user.first_name
+    name: str = user.first_name if user.first_name else user.username
     # build the message to print
     return UPVOTED_USER % (user.id, name)
 
@@ -86,17 +89,17 @@ def downvote_message(message: MessageModel, user: User):
     """
     # if the user has already downvoted the message ignore
     if user.id in message.downvotes:
-        name: str = user.username if user.username else user.first_name
-        send_and_delete(OPERATION_ALREADY_PERFORMED % (user.id, name))
+        name: str = user.first_name if user.first_name else user.username
+        send_and_delete(message.chat_id, OPERATION_ALREADY_PERFORMED % (user.id, name))
         return False
     # downvote the message
     message.downvotes.append(user.id)
+    message.karma_points -= 1
     # if the user has previously upvoted the message
     if user.id in message.upvotes:
         # remove the user from the upvote list
         message.upvotes.remove(user.id)
     # update the document in the database
-    print(message)
     message.save()
     return True
 
@@ -106,7 +109,7 @@ def format_downvote_message(_: MessageModel, user: UserModel):
     Format the message about the downvote that needs to be sent back to the chat
     """
     # extract the username or the first_name from the user
-    name: str = user.username if user.username else user.first_name
+    name: str = user.first_name if user.first_name else user.username
     # build the message to print
     return DOWNVOTED_USER % (user.id, name)
 
@@ -115,9 +118,9 @@ def handle_downvote(update: Update, context: CallbackContext):
     """ Handle an upvote """
     # lambda function to downvote the user
     downvote_user = lambda karma: karma - 1
-    handle_karma(
-        update, context, downvote_user, downvote_message, format_downvote_message
-    )
+    # fmt: off
+    handle_karma(update, context, downvote_user, downvote_message, format_downvote_message)
+    # fmt: on
 
 
 ##################################################################
@@ -160,14 +163,18 @@ def handle_karma(
         name = (
             upvote_user.first_name if upvote_user.first_name else upvote_user.username
         )
-        return send_and_delete(CANNOT_MODIFY_BOT_KARMA % (upvote_user.id, name), timeout=10)
+        return send_and_delete(
+            CANNOT_MODIFY_BOT_KARMA % (upvote_user.id, name), timeout=10
+        )
 
     # tell the user to f*** off if they try to upvote themselves
     if user.id == upvote_user.id:
         name = (
             upvote_user.first_name if upvote_user.first_name else upvote_user.username
         )
-        return send_and_delete(CANNOT_MODIFY_SELF_KARMA % (upvote_user.id, name), timeout=10)
+        return send_and_delete(
+            CANNOT_MODIFY_SELF_KARMA % (upvote_user.id, name), timeout=10
+        )
 
     # find or create a message on the database
     database_message: MessageModel = find_by_chat_and_message(reply)
@@ -186,9 +193,10 @@ def handle_karma(
 
         # send the message with auto-desctruction set to 10 seconds
         return send_and_delete(chat_id, text, timeout=10)
-    
+
 
 ##################################################################
+
 
 def user_karma(update: Update, _: CallbackContext):
     """ Show the current user or a quoted one karma points """

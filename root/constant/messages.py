@@ -9,10 +9,14 @@ DOWNVOTED_USER = 'Karma decrementato per <a href="tg://user?id=%s">%s</a>.'
 # message to print when a user got upvoted/downvoted
 UPVOTED_USER = 'Karma incrementato per <a href="tg://user?id=%s">%s</a>.'
 
-OPERATION_ALREADY_PERFORMED = '<a href="tg://user?id=%s">%s</a> Puoi eseguire questa azione una sola volta.'
+OPERATION_ALREADY_PERFORMED = (
+    '<a href="tg://user?id=%s">%s</a> Puoi eseguire questa azione una sola volta.'
+)
 
 # message when a user try to upvote/downvote themselves
-CANNOT_MODIFY_SELF_KARMA = '<a href="tg://user?id=%s">%s</a>, non puoi modificare il tuo karma.'
+CANNOT_MODIFY_SELF_KARMA = (
+    '<a href="tg://user?id=%s">%s</a>, non puoi modificare il tuo karma.'
+)
 
 # message when a bot send an upvote/downvote a user/bot
 BOT_MODIFIED_KARMA = "Ora ti siedi e mi spieghi come un bot sia riuscito modificare il bot di una persona."

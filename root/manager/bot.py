@@ -7,13 +7,11 @@ from telegram.ext import CommandHandler
 from telegram.ext import Filters
 from telegram_utils.utils.misc import environment
 from root.manager.karma import handle_downvote, handle_upvote, user_karma
+from root.constant.constant import UPVOTE_REGEX, DOWNVOTE_REGEX
+from root.constant.configuration_key import UPVOTE_REGEX_CODE, DOWNVOTE_REGEX_CODE
+from root.helper.configuration import find_by_code
+
 # endregion
-
-# Match for a +1 or a 👍 only
-UPVOTE_REGEX: str = r"(^\+1$)|(^👍$)"
-
-# Match for a -1 or a 👎 only
-DOWNVOTE_REGEX: str = r"(^\-1$)|(^👎$)"
 
 
 def start_bot():
@@ -32,14 +30,18 @@ def add_handler(updater: Updater):
     # the dispatcher is where you would ad the various handlers
     dispatcher: Dispatcher = updater.dispatcher
 
+    # search for a regex in the database for an upvote or stick to the default one
+    upvote: str = find_by_code(UPVOTE_REGEX_CODE, UPVOTE_REGEX)
     # create a filter for the upvote based on the regex
-    upvote: Filters = Filters.regex(UPVOTE_REGEX)
+    upvote: Filters = Filters.regex(upvote)
     # add the message handler and the command handler for the upvote
     dispatcher.add_handler(MessageHandler(upvote, handle_upvote))
     dispatcher.add_handler(CommandHandler("upvote", handle_upvote))
 
+    # search for a regex in the database for a downvote or stick to the default one
+    downvote: str = find_by_code(DOWNVOTE_REGEX_CODE, DOWNVOTE_REGEX)
     # create a filter fr the downvote based on the regex
-    downvote: Filters = Filters.regex(DOWNVOTE_REGEX)
+    downvote: Filters = Filters.regex(downvote)
     # add the message handler and the command handler for the downvote
     dispatcher.add_handler(MessageHandler(downvote, handle_downvote))
     dispatcher.add_handler(CommandHandler("downvote", handle_downvote))
